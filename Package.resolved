@@ -2,6 +2,15 @@
   "object": {
     "pins": [
       {
+        "package": "FootlessParser",
+        "repositoryURL": "https://github.com/kareman/FootlessParser",
+        "state": {
+          "branch": null,
+          "revision": "11c7a366720a2cc62d13ee69c8bdb8372bb3bb2b",
+          "version": "0.5.2"
+        }
+      },
+      {
         "package": "swift-algorithms",
         "repositoryURL": "https://github.com/apple/swift-algorithms",
         "state": {

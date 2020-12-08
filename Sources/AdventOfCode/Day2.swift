@@ -4,7 +4,7 @@ import Algorithms
 import FootlessParser
 
 public let unsignedInteger = { Int($0)! } <^> oneOrMore(digit)
-public let integer = { Int($0)! } <^> (extend <^> char("-") <*> oneOrMore(digit)) <|> unsignedInteger
+public let integer = { Int($0)! } <^> (extend <^> (char("+") <|> char("-")) <*> oneOrMore(digit)) <|> unsignedInteger
 public let whitespaces = oneOrMore(FootlessParser.whitespace)
 
 struct Day2: ParsableCommand {

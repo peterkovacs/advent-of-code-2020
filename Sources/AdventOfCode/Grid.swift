@@ -23,6 +23,14 @@ public struct Coordinate {
         return self.x >= 0 && self.x < x && self.y >= 0 && self.y < y
     }
 
+    public func go(in direction: Direction, while condition: (Self) -> Bool) -> Coordinate {
+        var result = self[keyPath: direction]
+        while condition(result) {
+            result = result[keyPath: direction]
+        }
+        return result
+    }
+
     public func neighbors( limitedBy: Int, traveling: Direction ) -> [Coordinate] {
         switch traveling {
         case \Coordinate.down, \Coordinate.up:
@@ -33,8 +41,8 @@ public struct Coordinate {
         }
     }
 
-    public func neighbors8( limitedBy: Int ) -> [Coordinate] {
-        return [ left, right, up, down, left.up, right.up, left.down, right.down ].filter { $0.isValid(x: limitedBy, y: limitedBy) }
+    public func neighbors8( maxX: Int, maxY: Int ) -> [Coordinate] {
+        return [ left, right, up, down, left.up, right.up, left.down, right.down ].filter { $0.isValid(x: maxX, y: maxY) }
     }
 
     public func direction(to: Coordinate) -> Direction {

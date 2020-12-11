@@ -3,49 +3,21 @@ import Foundation
 import ArgumentParser
 import Algorithms
 
+
+
 fileprivate extension Grid where Element == Character {
     func neighborsNonFloor(_ coordinate: Coordinate) -> [Coordinate] {
-        var left = coordinate.left
-        while left.isValid(x: maxX, y: maxY), self[left] == "." {
-            left = left.left
-        }
-
-        var right = coordinate.right
-        while right.isValid(x: maxX, y: maxY), self[right] == "." {
-            right = right.right
-        }
-
-        var up = coordinate.up
-        while up.isValid(x: maxX, y: maxY), self[up] == "." {
-            up = up.up
-        }
-
-        var down = coordinate.down
-        while down.isValid(x: maxX, y: maxY), self[down] == "." {
-            down = down.down
-        }
-
-        var upLeft = coordinate.up.left
-        while upLeft.isValid(x: maxX, y: maxY), self[upLeft] == "." {
-            upLeft = upLeft.up.left
-        }
-
-        var upRight = coordinate.up.right
-        while upRight.isValid(x: maxX, y: maxY), self[upRight] == "." {
-            upRight = upRight.up.right
-        }
-
-        var downLeft = coordinate.down.left
-        while downLeft.isValid(x: maxX, y: maxY), self[downLeft] == "." {
-            downLeft = downLeft.down.left
-        }
-
-        var downRight = coordinate.down.right
-        while downRight.isValid(x: maxX, y: maxY), self[downRight] == "." {
-            downRight = downRight.down.right
-        }
-
-        return [ up, down, left, right, upLeft, upRight, downLeft, downRight].filter { $0.isValid(x: maxX, y: maxY)}
+        [
+            coordinate.go(in: \.left) { $0.isValid(x: maxX, y: maxY) && self[$0] == "." },
+            coordinate.go(in: \.right) { $0.isValid(x: maxX, y: maxY) && self[$0] == "." },
+            coordinate.go(in: \.up) { $0.isValid(x: maxX, y: maxY) && self[$0] == "." },
+            coordinate.go(in: \.down) { $0.isValid(x: maxX, y: maxY) && self[$0] == "." },
+            coordinate.go(in: \.up.left) { $0.isValid(x: maxX, y: maxY) && self[$0] == "." },
+            coordinate.go(in: \.up.right) { $0.isValid(x: maxX, y: maxY) && self[$0] == "." },
+            coordinate.go(in: \.down.left) { $0.isValid(x: maxX, y: maxY) && self[$0] == "." },
+            coordinate.go(in: \.down.right) { $0.isValid(x: maxX, y: maxY) && self[$0] == "." },
+        ]
+        .filter { $0.isValid(x: maxX, y: maxY) }
     }
 
     func tick() -> Self {

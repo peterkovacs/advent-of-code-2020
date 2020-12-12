@@ -12,6 +12,7 @@ let package = Package(
         // Dependencies declare other packages that this package depends on.
         // .package(url: /* package url */, from: "1.0.0"),
         .package(url: "https://github.com/apple/swift-algorithms", from: "0.0.1"),
+        .package(url: "https://github.com/apple/swift-numerics", from: "0.0.8"),
         .package(url: "https://github.com/apple/swift-argument-parser", from: "0.3.0"),
         .package(url: "https://github.com/kareman/FootlessParser", from: "0.5.2")
     ],
@@ -22,6 +23,7 @@ let package = Package(
             name: "AdventOfCode",
             dependencies: [
                 .product(name: "Algorithms", package: "swift-algorithms"),
+                .product(name: "Numerics", package: "swift-numerics"),
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
                 .product(name: "FootlessParser", package: "FootlessParser"),
             ]),

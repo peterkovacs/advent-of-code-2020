@@ -3,74 +3,62 @@ import Foundation
 import ArgumentParser
 import Algorithms
 import FootlessParser
+import Numerics
 
-fileprivate extension KeyPath where Root == Coordinate, Value == Coordinate {
-    static let parser: Parser<Character, Coordinate.Direction> = [
-        "N": \Coordinate.north, "S": \Coordinate.south, "E": \Coordinate.east, "W": \Coordinate.west
+fileprivate extension Complex where RealType == Double {
+    static let parser: Parser<Character, Self> = [
+        "N": Self.i, "S": Self.i * Self(-1.0), "E": Self(1.0), "W": Self(-1.0)
     ].parser
 }
 
 fileprivate enum Command {
-    case move(Coordinate.Direction, Int)
-    // Negative is CCW, Positive is CW
-    case turn(Int)
-    case forward(Int)
+    case move(Complex<Double>)
+    case turn(Complex<Double>)
+    case forward(Complex<Double>)
 
     static let parser: Parser<Character, Command> =
-        (curry({ Command.move($0, $1) }) <^> Coordinate.Direction.parser <*> integer) <|>
-        ( { Command.turn(-1 * $0) } <^> (char("L") *> integer) ) <|>
-        ( { Command.turn($0) } <^> (char("R") *> integer) ) <|>
-        ( { Command.forward($0) } <^> (char("F") *> integer) )
+        (curry({ Command.move($0 * Complex(Double($1))) }) <^> Complex<Double>.parser <*> integer) <|>
+        ((string("L90") <|> string("R270"))  >>- { _ in pure(Command.turn(.i)) })  <|>
+        ((string("L180") <|> string("R180")) >>- { _ in pure(Command.turn(Complex(-1))) }) <|>
+        ((string("L270") <|> string("R90"))  >>- { _ in pure(Command.turn(.i * Complex(-1))) }) <|>
+        ( { Command.forward(Complex(Double($0))) } <^> (char("F") *> integer) )
 }
 
 fileprivate struct Ship {
-    var facing: Coordinate.Direction
-    var position: Coordinate
+    var facing: Complex<Double>
+    var position: Complex<Double>
 }
 
 fileprivate struct Waypoint {
-    var waypoint: Coordinate
-    var ship: Coordinate
+    var waypoint: Complex<Double>
+    var ship: Complex<Double>
 }
-
 
 struct Day12: ParsableCommand {
     fileprivate static let input = stdin.compactMap { try? FootlessParser.parse(Command.parser, $0) }
     func run() {
-        let part1 = Self.input.reduce(into: Ship(facing: \.east, position: .zero)) {
+        let part1 = Self.input.reduce(into: Ship(facing: Complex(1), position: .zero)) {
             switch $1 {
-            case .move(let direction, let val):
-                $0.position = $0.position.go(in: direction, val)
-            case .forward(let val):
-                $0.position = $0.position.go(in: $0.facing, val)
-            case .turn(-90), .turn(270):  $0.facing = Coordinate.turn(left: $0.facing)
-            case .turn(-180), .turn(180): $0.facing = Coordinate.turn(around: $0.facing)
-            case .turn(-270), .turn(90):  $0.facing = Coordinate.turn(right: $0.facing)
-            case .turn: fatalError()
+            case .move(let val): $0.position = $0.position + val
+            case .forward(let val): $0.position = $0.position + $0.facing * val
+            case .turn(let rotation): $0.facing = $0.facing * rotation
             }
         }
 
-        print("Part 1", abs(part1.position.x) + abs(part1.position.y))
+        print("Part 1", abs(part1.position.real) + abs(part1.position.imaginary))
 
-        let part2 = Self.input.reduce(into: Waypoint(waypoint: .init(x: 10, y: 1), ship: .zero)) {
+        let part2 = Self.input.reduce(into: Waypoint(waypoint: .init(10.0, 1.0), ship: .zero)) {
             let vector = $0.waypoint - $0.ship
 
             switch $1 {
-            case .move(let direction, let value):
-                $0.waypoint = $0.waypoint.go(in: direction, value)
+            case .move(let val): $0.waypoint = $0.waypoint + val
             case .forward(let multiplier):
                 $0.ship = $0.ship + vector * multiplier
                 $0.waypoint = $0.waypoint + vector * multiplier
-            case .turn(-90), .turn(270):
-                $0.waypoint = $0.ship + Coordinate(x: -vector.y, y: vector.x)
-            case .turn(-180), .turn(180):
-                $0.waypoint = $0.ship + Coordinate(x: -vector.x, y: -vector.y)
-            case .turn(-270), .turn(90):
-                $0.waypoint = $0.ship + Coordinate(x: vector.y, y: -vector.x)
-            case .turn: fatalError()
+            case .turn(let rotation): $0.waypoint = $0.ship + vector * rotation
             }
         }
 
-        print("Part 2", abs(part2.ship.x) + abs(part2.ship.y))
+        print("Part 2", abs(part2.ship.real) + abs(part2.ship.imaginary))
     }
 }

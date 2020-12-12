@@ -5,10 +5,18 @@ public struct Coordinate {
     public let x, y: Int
     public typealias Direction = KeyPath<Coordinate, Coordinate>
 
+    public static let zero = Coordinate(x: 0, y: 0)
+
     public var right: Coordinate { return Coordinate( x: x + 1, y: y ) }
     public var left: Coordinate { return Coordinate( x: x - 1, y: y ) }
     public var up: Coordinate { return Coordinate( x: x, y: y - 1 ) }
     public var down: Coordinate { return Coordinate( x: x, y: y + 1 ) }
+
+    public var east: Coordinate { return Coordinate( x: x + 1, y: y ) }
+    public var west: Coordinate { return Coordinate( x: x - 1, y: y ) }
+    public var south: Coordinate { return Coordinate( x: x, y: y - 1 ) }
+    public var north: Coordinate { return Coordinate( x: x, y: y + 1 ) }
+
     public var neighbors: [Coordinate] { return [ up, left, right, down ] }
 
     public func neighbors(limitedBy: Int) -> [Coordinate] {
@@ -29,6 +37,10 @@ public struct Coordinate {
             result = result[keyPath: direction]
         }
         return result
+    }
+
+    public func go(in direction: Direction, _ amount: Int) -> Coordinate {
+        self + Coordinate.zero[keyPath: direction] * amount
     }
 
     public func neighbors( limitedBy: Int, traveling: Direction ) -> [Coordinate] {
@@ -57,6 +69,35 @@ public struct Coordinate {
         self.x = x
         self.y = y
     }
+
+    public static func +(lhs: Coordinate, rhs: Coordinate) -> Coordinate {
+        return Coordinate(x: lhs.x + rhs.x, y: lhs.y + rhs.y)
+    }
+
+    public static func -(lhs: Coordinate, rhs: Coordinate) -> Coordinate {
+        return Coordinate(x: lhs.x - rhs.x, y: lhs.y - rhs.y)
+    }
+
+
+    public static func *(lhs: Coordinate, scale: Int) -> Coordinate {
+        return Coordinate(x: lhs.x * scale, y: lhs.y * scale)
+    }
+}
+
+extension KeyPath: CustomStringConvertible where Root == Coordinate, Value == Coordinate {
+    public var description: String {
+        switch self {
+        case \Coordinate.down: return "Coordinate.down"
+        case \Coordinate.left: return "Coordinate.left"
+        case \Coordinate.right: return "Coordinate.right"
+        case \Coordinate.up: return "Coordinate.up"
+        case \Coordinate.north: return "Coordinate.north"
+        case \Coordinate.south: return "Coordinate.south"
+        case \Coordinate.east: return "Coordinate.east"
+        case \Coordinate.west: return "Coordinate.west"
+        default: return "KeyPath<Coordinate, Coordinate>"
+        }
+    }
 }
 
 public extension Coordinate {
@@ -66,6 +107,11 @@ public extension Coordinate {
         case \Coordinate.up: return \Coordinate.left
         case \Coordinate.right: return \Coordinate.up
         case \Coordinate.left: return \Coordinate.down
+
+        case \Coordinate.north: return \Coordinate.west
+        case \Coordinate.east: return \Coordinate.north
+        case \Coordinate.south: return \Coordinate.east
+        case \Coordinate.west: return \Coordinate.south
         default: return left
         }
     }
@@ -75,6 +121,11 @@ public extension Coordinate {
         case \Coordinate.up: return \Coordinate.right
         case \Coordinate.right: return \Coordinate.down
         case \Coordinate.left: return \Coordinate.up
+
+        case \Coordinate.north: return \Coordinate.east
+        case \Coordinate.east: return \Coordinate.south
+        case \Coordinate.south: return \Coordinate.west
+        case \Coordinate.west: return \Coordinate.north
         default: return right
         }
     }
@@ -84,6 +135,11 @@ public extension Coordinate {
         case \Coordinate.up: return \Coordinate.down
         case \Coordinate.right: return \Coordinate.left
         case \Coordinate.left: return \Coordinate.right
+
+        case \Coordinate.north: return \Coordinate.south
+        case \Coordinate.east: return \Coordinate.west
+        case \Coordinate.south: return \Coordinate.north
+        case \Coordinate.west: return \Coordinate.east
         default: return around
         }
     }

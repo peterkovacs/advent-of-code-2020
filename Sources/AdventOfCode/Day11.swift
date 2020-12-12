@@ -3,21 +3,27 @@ import Foundation
 import ArgumentParser
 import Algorithms
 
-
+fileprivate var neighbors = [Coordinate:[Coordinate]]()
 
 fileprivate extension Grid where Element == Character {
     func neighborsNonFloor(_ coordinate: Coordinate) -> [Coordinate] {
-        [
-            coordinate.go(in: \.left) { $0.isValid(x: maxX, y: maxY) && self[$0] == "." },
-            coordinate.go(in: \.right) { $0.isValid(x: maxX, y: maxY) && self[$0] == "." },
-            coordinate.go(in: \.up) { $0.isValid(x: maxX, y: maxY) && self[$0] == "." },
-            coordinate.go(in: \.down) { $0.isValid(x: maxX, y: maxY) && self[$0] == "." },
-            coordinate.go(in: \.up.left) { $0.isValid(x: maxX, y: maxY) && self[$0] == "." },
-            coordinate.go(in: \.up.right) { $0.isValid(x: maxX, y: maxY) && self[$0] == "." },
-            coordinate.go(in: \.down.left) { $0.isValid(x: maxX, y: maxY) && self[$0] == "." },
-            coordinate.go(in: \.down.right) { $0.isValid(x: maxX, y: maxY) && self[$0] == "." },
-        ]
-        .filter { $0.isValid(x: maxX, y: maxY) }
+        if let precalculated = neighbors[coordinate] { return precalculated }
+
+        let result =
+            [
+                coordinate.go(in: \.left) { $0.isValid(x: maxX, y: maxY) && self[$0] == "." },
+                coordinate.go(in: \.right) { $0.isValid(x: maxX, y: maxY) && self[$0] == "." },
+                coordinate.go(in: \.up) { $0.isValid(x: maxX, y: maxY) && self[$0] == "." },
+                coordinate.go(in: \.down) { $0.isValid(x: maxX, y: maxY) && self[$0] == "." },
+                coordinate.go(in: \.up.left) { $0.isValid(x: maxX, y: maxY) && self[$0] == "." },
+                coordinate.go(in: \.up.right) { $0.isValid(x: maxX, y: maxY) && self[$0] == "." },
+                coordinate.go(in: \.down.left) { $0.isValid(x: maxX, y: maxY) && self[$0] == "." },
+                coordinate.go(in: \.down.right) { $0.isValid(x: maxX, y: maxY) && self[$0] == "." },
+            ]
+            .filter { $0.isValid(x: maxX, y: maxY) }
+
+        neighbors[coordinate] = result
+        return result
     }
 
     func tick() -> Self {

@@ -6,6 +6,27 @@ import FootlessParser
 
 let unsigned = { UInt($0)! } <^> oneOrMore(digit)
 
+extension Collection where Indices == Range<Int> {
+    /// Returns all combinations of each size in range
+    func combinations(range: Indices) -> AnyIterator<[Element]> {
+        var n = range.startIndex
+        var iterator = combinations(ofCount: n).makeIterator()
+        return .init {
+            if let next = iterator.next() { return next }
+            n += 1
+            guard n < range.endIndex else { return nil }
+
+            iterator = combinations(ofCount: n).makeIterator()
+            return iterator.next()
+        }
+    }
+
+    /// Returns all combinations of each size in 0...count
+    func combinations() -> AnyIterator<[Element]> {
+        return combinations(range: indices)
+    }
+}
+
 struct Day14: ParsableCommand {
     enum Instruction {
         case mask(UInt, UInt, [UInt])
@@ -15,14 +36,12 @@ struct Day14: ParsableCommand {
     static let parser =
         {
             Instruction.mask(
-                $0.reduce(into: UInt(0)) {
-                    if $1 == "1" { $0 |= 1 }
-                    $0 <<= 1
-                } >> 1,
-                $0.reduce(into: UInt(0)) {
-                    if $1 == "0" { $0 |= 1 }
-                    $0 <<= 1
-                } >> 1,
+                $0.reversed().enumerated().reduce(into: UInt(0)) {
+                    if $1.element == "1" { $0 |= (1 << $1.offset) }
+                },
+                $0.reversed().enumerated().reduce(into: UInt(0)) {
+                    if $1.element == "0" { $0 |= (1 << $1.offset) }
+                },
                 $0.reversed().enumerated().reduce(into: []) {
                     if $1.element == "X" { $0.append(UInt(1) << $1.offset) }
                 }
@@ -54,9 +73,9 @@ struct Day14: ParsableCommand {
         for instruction in Self.input {
             switch instruction {
             case .mask(let a, let b, let c):
-                mask = (ones: a, nonFloat: ~(~a & ~b) & 0x7FFFFFFF, float: c)
+                mask = (ones: a, nonFloat: ~(~a & ~b), float: c)
             case .memory(let pos, let value):
-                for m in (0...mask.float.count).flatMap({ mask.float.combinations(ofCount: $0) }) {
+                for m in mask.float.combinations() {
                     memory[
                         (pos & mask.nonFloat) | mask.ones | m.reduce(0, { $0 | $1 })
                     ] = value

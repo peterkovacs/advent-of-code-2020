@@ -14,7 +14,7 @@ extension Collection where Indices == Range<Int> {
         return .init {
             if let next = iterator.next() { return next }
             n += 1
-            guard n < range.endIndex else { return nil }
+            guard n <= range.endIndex else { return nil }
 
             iterator = combinations(ofCount: n).makeIterator()
             return iterator.next()

@@ -9,9 +9,9 @@ struct Day15: ParsableCommand {
 
     var numbers: AnyIterator<Int> {
         var starting = input.components(separatedBy: ",").compactMap(Int.init)
-        var numbers = [Int: (Int, Int?)](uniqueKeysWithValues: starting.enumerated().map { ($0.element, ($0.offset + 1, nil)) })
+        var numbers: [(Int, Int?)?] = Array(repeating: nil, count: count)
 
-        var n = starting.last!
+        var n = 0
         var i = 0
 
         return .init { 
@@ -19,6 +19,7 @@ struct Day15: ParsableCommand {
 
             if !starting.isEmpty {
                 n = starting.removeFirst()
+                numbers[n] = (i, nil)
             } else {
                 switch numbers[n] {
                 case let .some((x, .some(y))):

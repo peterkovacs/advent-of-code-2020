@@ -1,5 +1,6 @@
 import Foundation
 import CoreGraphics
+import Algorithms
 
 public struct Coordinate {
     public let x, y: Int
@@ -149,6 +150,7 @@ public struct Grid<T>: Sequence {
 
     public struct CoordinateIterator: Sequence, IteratorProtocol {
         let maxX, maxY: Int
+        let transform: CGAffineTransform
         var coordinate: Coordinate
 
         public mutating func next() -> Coordinate? {
@@ -158,7 +160,8 @@ public struct Grid<T>: Sequence {
             guard coordinate.isValid( x: maxX, y: maxY ) else { return nil }
             defer { coordinate = coordinate.right }
 
-            return coordinate
+            let point = CGPoint(x: coordinate.x, y: coordinate.y).applying(transform)
+            return Coordinate(x: Int(point.x.rounded()), y: Int(point.y.rounded()))
         }
     }
 
@@ -179,8 +182,14 @@ public struct Grid<T>: Sequence {
     let transform: CGAffineTransform
 
     public subscript( x x: Int, y y: Int ) -> Element {
-        get { grid[ y * maxX + x ] }
-        set { grid[ y * maxX + x ] = newValue }
+        get {
+            let (xp, yp) = transform(x: x, y: y)
+            return grid[ yp * maxX + xp ]
+        }
+        set {
+            let (xp, yp) = transform(x: x, y: y)
+            grid[ yp * maxX + xp ] = newValue
+        }
     }
 
     public subscript( _ c: Coordinate ) -> Element {
@@ -188,8 +197,19 @@ public struct Grid<T>: Sequence {
         set { self[ x: c.x, y: c.y ] = newValue }
     }
 
+    func transform(x: Int, y: Int) -> (x: Int, y: Int) {
+        let point = CGPoint(x: x, y: y).applying(transform)
+        return (x: Int(point.x.rounded()), y: Int(point.y.rounded()))
+    }
+
+
     public subscript( x x: CountableRange<Int>, y y: CountableRange<Int>) -> Grid<Element>? {
-        return Grid( zip( y, repeatElement( x, count: y.count ) ).lazy.flatMap{ outer in outer.1.map { inner in self[ x: inner, y: outer.0 ] } }, maxX: x.count, maxY: y.count, transform: .identity )
+        return Grid(
+            product(x, y).map { (x, y) in self[x: x, y: y] },
+            maxX: x.count,
+            maxY: y.count,
+            transform: .identity
+        )
     }
 
     public init?<S: Sequence>( _ input: S, maxX: Int, maxY: Int, transform: CGAffineTransform = .identity ) where S.Element == Element {
@@ -201,12 +221,33 @@ public struct Grid<T>: Sequence {
         guard grid.count == maxX * maxY else { return nil }
     }
 
+    public func applying(_ transform: CGAffineTransform) -> Self {
+        Grid(grid, maxX: maxX, maxY: maxY, transform: self.transform.concatenating(transform) )!
+    }
+
+    public var rotated: Self {
+        applying(
+            CGAffineTransform.identity
+                .translatedBy(x: CGFloat(maxX) / 2, y: CGFloat(maxY) / 2)
+                .rotated(by: .pi/2)
+                .translatedBy(x: -CGFloat(maxX) / 2, y: -CGFloat(maxY) / 2 + 1)
+        )
+    }
+
+    public var mirrored: Self {
+        applying(
+            CGAffineTransform.identity
+                .scaledBy(x: -1, y: 1)
+                .translatedBy(x: -CGFloat(maxX) + 1, y: 0)
+        )
+    }
+
     public func makeIterator() -> Iterator {
-        return Iterator(grid: self, iterator: CoordinateIterator(maxX: maxX, maxY: maxY, coordinate: Coordinate(x: 0, y: 0)))
+        return Iterator(grid: self, iterator: CoordinateIterator(maxX: maxX, maxY: maxY, transform: transform, coordinate: Coordinate(x: 0, y: 0)))
     }
 
     public var indices: CoordinateIterator {
-        return CoordinateIterator(maxX: maxX, maxY: maxY, coordinate: Coordinate(x: 0, y: 0))
+        return CoordinateIterator(maxX: maxX, maxY: maxY, transform: transform, coordinate: Coordinate(x: 0, y: 0))
     }
 
     public mutating func copy( grid: Grid<T>, origin: Coordinate ) {

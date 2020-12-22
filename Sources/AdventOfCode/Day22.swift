@@ -2,7 +2,8 @@
 import Foundation
 import ArgumentParser
 import Algorithms
-import FootlessParser
+//import FootlessParser
+import Parsing
 
 fileprivate extension Array where Element == Int {
     var score: Int {
@@ -11,10 +12,24 @@ fileprivate extension Array where Element == Int {
 }
 
 struct Day22: ParsableCommand {
-    static let parser = tuple <^>
-        (string("Player 1:\n") *> oneOrMore(integer <* char("\n")) <* char("\n")) <*>
-        (string("Player 2:\n") *> oneOrMore(integer <* char("\n")))
-    static let (player1, player2) = try! FootlessParser.parse(parser, stdin.joined(separator: "\n") + "\n")
+    static let player = StartsWith<Substring>("Player ")
+        .ignoreOutput()
+        .skip(Int.parser())
+        .skip(StartsWith(":\n"))
+        .take(
+            Many(
+                Int.parser(),
+                separator: Newline().pullback(\.utf8)
+            )
+        )
+        .skip(Newline().pullback(\.utf8))
+    
+    static let parser = player
+        .skip(Newline().pullback(\.utf8))
+        .take(player)
+        .skip(End())
+
+    static let (player1, player2) = parser.parse(stdin.joined(separator: "\n") + "\n")!
 
     func part1() {
         var (player1, player2) = (Self.player1, Self.player2)
